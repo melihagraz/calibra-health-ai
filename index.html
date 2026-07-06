@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>OutlierHealth — Interactive Prototype</title>
+<title>Calibra Health AI — Interactive Prototype</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='1' y='1' width='30' height='30' rx='8' fill='%230E2439'/><path d='M5 18 L11 18 L13 15 L15 21 L17 18 L20 18 L22 7 L24 26 L26 18 L27 18' fill='none' stroke='%23DCE9F2' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'/><path d='M20 18 L22 7 L24 26 L26 18' fill='none' stroke='%231C7FC4' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/><circle cx='22' cy='7' r='2.3' fill='%231C7FC4'/></svg>" />
 <style>
 :root{
   --bg:#EAF2F8; --panel:#DCE9F2; --panel2:#F4F9FC; --ink:#14283B; --accent:#1C7FC4;
@@ -20,6 +21,7 @@ button{font-family:var(--sans);cursor:pointer}
 .brand{display:flex;align-items:center;gap:16px}
 .brand .mark{font-family:var(--serif);font-size:26px}
 .brand .mark b{color:var(--deep)}
+.brand .mark .ai{font-family:var(--sans);font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1.5px;vertical-align:3px;margin-left:2px}
 .ecg{width:92px;height:30px}
 .ecg path{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:320;stroke-dashoffset:320;animation:draw 3.4s ease-in-out infinite}
 @keyframes draw{0%{stroke-dashoffset:320}55%{stroke-dashoffset:0}100%{stroke-dashoffset:-320}}
@@ -114,7 +116,7 @@ textarea{resize:vertical;min-height:70px;width:100%}
 <div class="app">
   <div class="header">
     <div class="brand">
-      <span class="mark">Outlier<b>Health</b></span>
+      <span class="mark">Calibra <b>Health</b><span class="ai">AI</span></span>
       <svg class="ecg" viewBox="0 0 92 30"><path d="M0,15 L14,15 L20,15 L24,10 L28,20 L32,15 L40,15 L46,15 L50,15 L54,5 L58,15 L62,15 L70,15 L74,3 L78,26 L82,15 L86,15 L92,15"/></svg>
     </div>
     <div class="tabs" id="tabs">
@@ -177,7 +179,7 @@ textarea{resize:vertical;min-height:70px;width:100%}
   <!-- ABOUT -->
   <div class="view" id="v-about">
     <div class="panel" style="margin-bottom:20px">
-      <h2 class="stitle">How OutlierHealth works</h2>
+      <h2 class="stitle">How Calibra Health AI works</h2>
       <p class="ssub">A triage &amp; decision-support layer between patient intake and the care team. The differentiator is calibrated confidence via conformal prediction.</p>
       <div class="about-grid" id="steps"></div>
     </div>
@@ -195,7 +197,7 @@ textarea{resize:vertical;min-height:70px;width:100%}
     </div>
   </div>
 
-  <div class="footer"><b>Research prototype. Synthetic data. Not for clinical use.</b> — OutlierHealth demonstrates conformal-calibrated triage on generated data and has not been clinically validated.</div>
+  <div class="footer"><b>Research prototype. Synthetic data. Not for clinical use.</b> — Calibra Health AI demonstrates conformal-calibrated triage on generated data and has not been clinically validated.</div>
 </div>
 
 <div class="scrim" id="scrim"><div class="drawer" id="drawer"></div></div>
