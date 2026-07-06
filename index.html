@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OutlierHealth — Interactive Prototype</title>
+<style>
+:root{
+  --bg:#EAF2F8; --panel:#DCE9F2; --panel2:#F4F9FC; --ink:#14283B; --accent:#1C7FC4;
+  --deep:#0E5FA0; --muted:#5E7488; --hair:#C2D6E5; --routine:#8FA9BF; --white:#fff;
+  --serif:Georgia,"Times New Roman",serif; --sans:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --radius:8px; --sh:0 2px 10px rgba(20,40,59,.07); --shl:0 12px 34px rgba(20,40,59,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--serif);font-weight:700;color:var(--ink)}
+button{font-family:var(--sans);cursor:pointer}
+.app{max-width:1120px;margin:0 auto;padding:0 22px 70px}
+.header{display:flex;align-items:center;justify-content:space-between;padding:20px 0 16px;border-bottom:1px solid var(--hair);margin-bottom:24px;flex-wrap:wrap;gap:14px}
+.brand{display:flex;align-items:center;gap:16px}
+.brand .mark{font-family:var(--serif);font-size:26px}
+.brand .mark b{color:var(--deep)}
+.ecg{width:92px;height:30px}
+.ecg path{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:320;stroke-dashoffset:320;animation:draw 3.4s ease-in-out infinite}
+@keyframes draw{0%{stroke-dashoffset:320}55%{stroke-dashoffset:0}100%{stroke-dashoffset:-320}}
+.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--hair);border-radius:999px;padding:4px}
+.tab{border:0;background:transparent;color:var(--muted);font-size:14px;font-weight:600;padding:8px 16px;border-radius:999px;transition:.2s}
+.tab:hover{color:var(--ink)}
+.tab.active{background:var(--white);color:var(--ink);box-shadow:var(--sh)}
+.panel{background:var(--white);border:1px solid var(--hair);border-radius:var(--radius);box-shadow:var(--sh);padding:22px}
+.panel.tint{background:var(--panel)}
+.stitle{font-size:21px}
+.ssub{color:var(--muted);font-size:14px;margin:4px 0 18px}
+.view{display:none}
+.view.on{display:block}
+/* worklist */
+.wl-tool{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.sorters{display:flex;gap:6px;align-items:center}
+.sorters span{font-size:13px;color:var(--muted);margin-right:4px}
+.chip{border:1px solid var(--hair);background:var(--white);color:var(--muted);font-size:13px;font-weight:600;border-radius:999px;padding:5px 13px}
+.chip.on{border-color:var(--accent);color:var(--ink);background:#e4f0f9}
+.wl-head,.wl-row{display:grid;grid-template-columns:40px 1.6fr 1fr 84px 1.4fr;gap:14px;align-items:center;padding:13px 15px}
+.wl-head{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);padding-bottom:8px}
+.wl-row{background:var(--white);border:1px solid var(--hair);border-radius:var(--radius);box-shadow:var(--sh);margin-bottom:9px;cursor:pointer;transition:transform .5s cubic-bezier(.22,.61,.36,1),box-shadow .15s,border-color .15s}
+.wl-row:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(20,40,59,.12)}
+.wl-rank{font-family:var(--serif);font-size:20px;color:var(--deep);text-align:center}
+.wl-name{font-weight:600}
+.wl-name .sub{font-weight:400;color:var(--muted);font-size:12px}
+.wl-score{font-family:var(--serif);font-size:24px;text-align:right;font-variant-numeric:tabular-nums}
+.wl-conf .r{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px}
+.pill{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:#fff;border-radius:999px;padding:4px 12px;white-space:nowrap}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.85)}
+.pill.high{background:var(--ink)} .pill.watch{background:var(--accent)} .pill.routine{background:var(--routine)}
+.confbar{position:relative;height:10px;border-radius:6px;background:var(--panel);border:1px solid var(--hair);overflow:hidden}
+.confbar .fill{position:absolute;inset:0 auto 0 0;width:0;border-radius:6px;transition:width 1.1s cubic-bezier(.22,.61,.36,1)}
+.fill.high{background:var(--deep)} .fill.watch{background:var(--accent)} .fill.routine{background:var(--routine)}
+/* forms */
+.form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+.field .unit{color:var(--routine);font-weight:400;text-transform:none;letter-spacing:0}
+.field input,.field textarea{border:1px solid var(--hair);border-radius:var(--radius);padding:10px 12px;font-size:15px;font-family:var(--sans);color:var(--ink);background:#fff;transition:.15s}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(28,127,196,.14)}
+.field.bad input{border-color:#b4432f;box-shadow:0 0 0 3px rgba(180,67,47,.12)}
+.ferr{color:#b4432f;font-size:12px}
+.checks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.check{display:flex;align-items:center;gap:9px;border:1px solid var(--hair);border-radius:var(--radius);padding:10px 12px;background:var(--panel2);font-size:14px;user-select:none;cursor:pointer;transition:.15s}
+.check:hover{border-color:var(--accent)} .check.on{border-color:var(--accent);background:#e4f0f9}
+.check input{accent-color:var(--deep);width:16px;height:16px}
+textarea{resize:vertical;min-height:70px;width:100%}
+.btn{border:0;border-radius:var(--radius);padding:12px 22px;font-size:15px;font-weight:600;background:var(--deep);color:#fff;transition:.15s}
+.btn:hover{background:#0b4e85}.btn:disabled{background:var(--routine);cursor:default}
+.btn.ghost{background:transparent;color:var(--deep);border:1px solid var(--hair)}
+.btn.ghost:hover{background:var(--panel)}
+/* result */
+.result{display:grid;grid-template-columns:220px 1fr;gap:26px;align-items:start}
+.ring{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+.score-big{font-family:var(--serif);font-size:74px;line-height:1;font-variant-numeric:tabular-nums}
+.cap{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.mrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px}
+.mlab{font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+.bigpct{font-family:var(--serif);font-size:24px;font-variant-numeric:tabular-nums}
+.inote{font-size:13px;color:var(--muted);margin-top:8px}
+.settag{display:inline-block;font-size:12px;border:1px solid var(--hair);border-radius:999px;padding:2px 10px;margin:0 6px 4px 0;background:var(--panel2)}
+.factor{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:9px 0;border-top:1px solid var(--hair)}
+.factor:first-child{border-top:0}.factor .fn{font-weight:600;font-size:14px}.factor .fv{color:var(--muted);font-size:13px}
+.fbar{grid-column:1/-1;height:6px;border-radius:4px;background:var(--panel);overflow:hidden}
+.fbar .fb{height:100%;background:var(--accent);border-radius:4px;transition:width .9s ease}
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(20,40,59,.35);display:none;justify-content:flex-end;z-index:50}
+.scrim.on{display:flex;animation:fade .2s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.drawer{width:min(520px,94vw);background:var(--bg);height:100%;overflow-y:auto;box-shadow:var(--shl);padding:24px;animation:slide .28s cubic-bezier(.22,.61,.36,1)}
+@keyframes slide{from{transform:translateX(40px);opacity:.4}to{transform:translateX(0);opacity:1}}
+.dclose{border:1px solid var(--hair);background:#fff;border-radius:var(--radius);padding:6px 12px;font-size:13px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 18px;margin-top:8px}
+.kv .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.kv .v{font-size:15px;font-weight:600}.kv .v.abn{color:var(--deep)}
+/* about */
+.about-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.acard{display:flex;flex-direction:column;gap:8px}
+.acard .num{font-family:var(--serif);font-size:15px;color:#fff;background:var(--deep);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.acard h3{font-size:17px}.acard p{color:var(--muted);font-size:14px}
+.mstrip{display:flex;gap:26px;flex-wrap:wrap;margin-top:6px}
+.metric .mv{font-family:var(--serif);font-size:28px}.metric .ml{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.banner{border-radius:var(--radius);padding:12px 16px;font-size:14px;margin-bottom:16px}
+.banner.err{background:#fbeae7;border:1px solid #e6b8ad;color:#8f3220}
+.footer{margin-top:36px;padding:16px 0;border-top:1px solid var(--hair);text-align:center;color:var(--muted);font-size:13px}
+.footer b{color:var(--ink)}
+@media(max-width:720px){.form-grid,.checks,.about-grid{grid-template-columns:1fr 1fr}.result{grid-template-columns:1fr}.wl-head,.wl-row{grid-template-columns:32px 1.3fr 80px 1.1fr}.wl-tier,.col-tier{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="brand">
+      <span class="mark">Outlier<b>Health</b></span>
+      <svg class="ecg" viewBox="0 0 92 30"><path d="M0,15 L14,15 L20,15 L24,10 L28,20 L32,15 L40,15 L46,15 L50,15 L54,5 L58,15 L62,15 L70,15 L74,3 L78,26 L82,15 L86,15 L92,15"/></svg>
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab" data-v="worklist">Priority Worklist</button>
+      <button class="tab" data-v="intake">Intake</button>
+      <button class="tab" data-v="about">How it works</button>
+    </div>
+  </div>
+
+  <!-- WORKLIST -->
+  <div class="view" id="v-worklist">
+    <div class="panel tint">
+      <div class="wl-tool">
+        <div>
+          <h2 class="stitle">Priority Worklist</h2>
+          <p class="ssub" id="wl-count" style="margin:0"></p>
+        </div>
+        <div class="sorters">
+          <span>Sort by</span>
+          <button class="chip on" data-s="rank">Priority</button>
+          <button class="chip" data-s="score">Risk score</button>
+          <button class="chip" data-s="confidence">Confidence</button>
+        </div>
+      </div>
+      <div class="wl-head">
+        <div>#</div><div>Patient</div><div class="col-tier">Risk tier</div>
+        <div style="text-align:right">Score</div><div>Confidence</div>
+      </div>
+      <div id="wl-rows"></div>
+    </div>
+  </div>
+
+  <!-- INTAKE -->
+  <div class="view" id="v-intake">
+    <div class="panel" style="margin-bottom:20px">
+      <h2 class="stitle">New patient intake</h2>
+      <p class="ssub">Enter vitals, history flags, and a short symptom note. The model scores deterioration risk and attaches a conformal confidence — computed live, in your browser.</p>
+      <div id="err-slot"></div>
+      <form id="form">
+        <div class="field" style="margin-bottom:18px">
+          <label>Patient name / identifier</label>
+          <input id="f-name" type="text" placeholder="e.g. Bed 4 — J. Doe" />
+        </div>
+        <div class="form-grid" id="vitals"></div>
+        <div class="mlab" style="margin:20px 0 10px">History flags</div>
+        <div class="checks" id="flags"></div>
+        <div class="field" style="margin:20px 0">
+          <label>Symptom note <span class="unit">(free text — keywords are extracted)</span></label>
+          <textarea id="f-note" placeholder="e.g. Increasing shortness of breath overnight, chest pressure, dizzy on standing."></textarea>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn" id="submit" type="submit">Score &amp; add to worklist</button>
+          <button class="btn ghost" id="reset" type="button">Reset</button>
+        </div>
+      </form>
+    </div>
+    <div id="result-slot"></div>
+  </div>
+
+  <!-- ABOUT -->
+  <div class="view" id="v-about">
+    <div class="panel" style="margin-bottom:20px">
+      <h2 class="stitle">How OutlierHealth works</h2>
+      <p class="ssub">A triage &amp; decision-support layer between patient intake and the care team. The differentiator is calibrated confidence via conformal prediction.</p>
+      <div class="about-grid" id="steps"></div>
+    </div>
+    <div class="panel">
+      <h2 class="stitle">Under the hood</h2>
+      <p class="ssub">The confidence is genuinely computed — not decorative. Figures from the trained model's held-out test split.</p>
+      <div class="mstrip">
+        <div class="metric"><div class="mv">80%</div><div class="ml">Test AUC</div></div>
+        <div class="metric"><div class="mv">89.7%</div><div class="ml">Set coverage (target 90%)</div></div>
+        <div class="metric"><div class="mv">89.7%</div><div class="ml">Interval coverage</div></div>
+        <div class="metric"><div class="mv">1.25</div><div class="ml">Avg prediction-set size</div></div>
+        <div class="metric"><div class="mv">1,000</div><div class="ml">Calibration examples</div></div>
+      </div>
+      <p class="inote" style="margin-top:18px"><b>Method:</b> split / inductive conformal prediction. A logistic-regression model is fit on a training split; a disjoint calibration split provides nonconformity scores (Vovk p-values for the class set; normalized residuals for the risk interval), giving distribution-free, finite-sample coverage close to the 90% target. This exact model runs client-side in this page.</p>
+    </div>
+  </div>
+
+  <div class="footer"><b>Research prototype. Synthetic data. Not for clinical use.</b> — OutlierHealth demonstrates conformal-calibrated triage on generated data and has not been clinically validated.</div>
+</div>
+
+<div class="scrim" id="scrim"><div class="drawer" id="drawer"></div></div>
+
+<script>
+/* ===== embedded model (exported from the trained scikit-learn bundle) ===== */
+const MODEL = {"features":["heart_rate","systolic_bp","resp_rate","spo2","temperature","hf","diabetes","prior_mi","age_gt_65","recent_hosp","chest_pain","shortness_breath","dizzy"],"labels":["Heart rate","Systolic BP","Respiratory rate","SpO₂","Temperature","Prior heart failure","Diabetes","Prior MI","Age > 65","Recent hospitalization","Chest pain (note)","Shortness of breath (note)","Dizziness (note)"],"mean":[77.691,124.000667,16.037,96.913,36.795367,0.171667,0.24,0.113667,0.345,0.205667,0.157667,0.152667,0.125],"scale":[14.772526,18.833534,3.215322,2.112841,0.614385,0.37709,0.427083,0.317406,0.475368,0.404188,0.364428,0.359666,0.330719],"coef":[0.52875,-0.760646,0.391954,-0.658284,0.345442,0.213187,0.091617,0.188374,0.154024,0.201601,0.421367,0.417705,0.214133],"intercept":-1.522968,"q_reg":1.239041,"beta":0.1,"alpha":0.1,"high":67,"watch":34};
+const CAL_SCORES = [0.72954,0.10963,0.1218,0.1586,0.0194,0.1371,0.31647,0.37176,0.17728,0.01505,0.57777,0.45888,0.03021,0.67724,0.02195,0.50384,0.11074,0.26365,0.11971,0.13639,0.30103,0.24462,0.30821,0.06945,0.71887,0.25467,0.34683,0.10836,0.05952,0.49334,0.5155,0.46762,0.30609,0.86,0.0373,0.27203,0.04706,0.02338,0.19843,0.08624,0.15262,0.06254,0.13191,0.85074,0.84027,0.06257,0.43317,0.01997,0.29736,0.01244,0.30194,0.34553,0.15685,0.45068,0.56013,0.08882,0.05367,0.07493,0.41832,0.12842,0.81819,0.08009,0.13317,0.07699,0.88987,0.20209,0.27929,0.8529,0.52453,0.01545,0.11737,0.39433,0.41554,0.74202,0.40145,0.45341,0.37426,0.07683,0.72541,0.04327,0.44488,0.06185,0.13961,0.04751,0.37851,0.44203,0.59616,0.43628,0.12337,0.21009,0.09508,0.06166,0.0982,0.02771,0.54226,0.04997,0.51668,0.97159,0.69928,0.89493,0.07509,0.17815,0.02222,0.60215,0.03842,0.09186,0.35932,0.35344,0.03185,0.6792,0.12078,0.0188,0.21688,0.49773,0.1371,0.33731,0.37526,0.3339,0.53184,0.28441,0.63542,0.01412,0.23286,0.20534,0.19484,0.17615,0.0266,0.38192,0.34495,0.19045,0.35791,0.13447,0.01672,0.92918,0.09948,0.86692,0.05733,0.50469,0.14182,0.05232,0.02588,0.34602,0.77225,0.64935,0.64458,0.06859,0.17391,0.19774,0.92041,0.68677,0.12646,0.41563,0.34421,0.88467,0.38424,0.56603,0.39375,0.03203,0.06864,0.21687,0.1667,0.10621,0.26611,0.13144,0.45017,0.6586,0.02586,0.44567,0.06386,0.61272,0.85766,0.07989,0.23583,0.0352,0.24531,0.47512,0.0762,0.28229,0.77183,0.10014,0.08508,0.16651,0.34693,0.1301,0.9668,0.14624,0.65659,0.70821,0.4493,0.22672,0.46689,0.79112,0.27905,0.15727,0.04316,0.09879,0.4063,0.30987,0.59641,0.05754,0.04377,0.11068,0.70249,0.07835,0.54369,0.45682,0.02135,0.79815,0.33497,0.83786,0.01685,0.05128,0.01291,0.25963,0.43341,0.69477,0.01463,0.18338,0.97087,0.95418,0.19292,0.0648,0.51379,0.66583,0.27209,0.02623,0.10912,0.06215,0.08901,0.02836,0.93198,0.04149,0.11252,0.13934,0.14678,0.24032,0.19555,0.19542,0.04868,0.19511,0.02256,0.303,0.16165,0.08303,0.56881,0.13592,0.22862,0.04393,0.07808,0.17459,0.59622,0.22161,0.36871,0.39565,0.02347,0.88427,0.21284,0.48274,0.40516,0.08307,0.62792,0.03762,0.82239,0.68079,0.78712,0.54072,0.17504,0.05267,0.61978,0.89649,0.42375,0.51272,0.27059,0.6773,0.18371,0.45411,0.10711,0.56499,0.61247,0.62883,0.25597,0.27698,0.09673,0.0081,0.26043,0.08976,0.21495,0.81169,0.91063,0.02051,0.2207,0.05441,0.04425,0.39013,0.11402,0.72742,0.35388,0.02992,0.13798,0.09631,0.47754,0.05852,0.0086,0.04087,0.12143,0.42804,0.37469,0.11332,0.13838,0.2508,0.03521,0.39794,0.93821,0.08018,0.04301,0.04684,0.27947,0.70257,0.76751,0.78689,0.07769,0.17261,0.07391,0.19333,0.07892,0.90744,0.02985,0.53109,0.43271,0.02174,0.03628,0.60955,0.27978,0.36945,0.8442,0.0468,0.87905,0.07721,0.17804,0.19408,0.8794,0.07781,0.07099,0.20191,0.01996,0.22423,0.01301,0.34224,0.09119,0.82061,0.68885,0.03147,0.08244,0.5634,0.04296,0.21723,0.37221,0.32711,0.06399,0.39521,0.21653,0.07883,0.23055,0.06875,0.13113,0.35757,0.05193,0.01067,0.46027,0.57812,0.03611,0.11173,0.46902,0.15673,0.67105,0.16101,0.31963,0.09667,0.72987,0.75705,0.68912,0.60499,0.03281,0.07486,0.01199,0.17669,0.17869,0.03214,0.91318,0.13476,0.06796,0.10017,0.09173,0.00862,0.78165,0.28987,0.37551,0.01127,0.07558,0.01041,0.19557,0.08482,0.2996,0.69188,0.23152,0.4328,0.50529,0.57168,0.05478,0.39682,0.57083,0.10263,0.79046,0.0413,0.24179,0.46609,0.76771,0.593,0.09189,0.83108,0.04231,0.86348,0.18722,0.02296,0.04037,0.62177,0.1703,0.04401,0.17845,0.14479,0.21827,0.05946,0.07107,0.06624,0.05816,0.18487,0.23052,0.34119,0.4297,0.09291,0.05408,0.3915,0.25796,0.02324,0.08539,0.11463,0.3073,0.22488,0.7764,0.53348,0.06128,0.33869,0.22734,0.28539,0.18291,0.3214,0.09162,0.57557,0.09853,0.08875,0.13737,0.03297,0.0438,0.10104,0.08839,0.09089,0.53262,0.14667,0.1268,0.1779,0.41547,0.49268,0.03424,0.74942,0.73066,0.21251,0.01716,0.02636,0.38527,0.21012,0.06886,0.06265,0.13573,0.67528,0.06405,0.3457,0.03928,0.04522,0.2225,0.34775,0.00842,0.02599,0.06791,0.72943,0.3032,0.25525,0.02154,0.05423,0.10681,0.25522,0.07318,0.24956,0.07394,0.26668,0.12007,0.03761,0.18596,0.85029,0.09845,0.02572,0.0799,0.02628,0.18996,0.23213,0.76885,0.0482,0.1018,0.70575,0.00644,0.02852,0.53926,0.05268,0.88057,0.10556,0.65932,0.77036,0.07178,0.13014,0.03596,0.1849,0.03755,0.21069,0.84422,0.688,0.0609,0.03217,0.22039,0.67929,0.02691,0.10172,0.06915,0.05643,0.7536,0.04274,0.14276,0.33029,0.11324,0.07746,0.30032,0.11009,0.32417,0.09235,0.06894,0.2997,0.17721,0.07528,0.20323,0.09403,0.13518,0.30483,0.52413,0.43835,0.1117,0.0378,0.42386,0.13413,0.09353,0.12439,0.21227,0.00929,0.44457,0.60779,0.06684,0.11172,0.55345,0.51764,0.09592,0.23759,0.04938,0.30968,0.00947,0.05614,0.6741,0.57172,0.10442,0.14304,0.15587,0.11081,0.11703,0.03176,0.47558,0.36079,0.13236,0.26445,0.2958,0.08304,0.18398,0.02336,0.09573,0.04431,0.08958,0.03147,0.21,0.07621,0.08412,0.02226,0.51802,0.02517,0.02976,0.10476,0.07649,0.26342,0.24351,0.0167,0.79919,0.13085,0.20708,0.34293,0.13623,0.02463,0.19544,0.72065,0.66458,0.30651,0.76999,0.31883,0.18755,0.26614,0.14873,0.65838,0.13152,0.44846,0.46748,0.03505,0.15559,0.57439,0.72252,0.86157,0.1743,0.45378,0.04086,0.03596,0.02232,0.34838,0.69459,0.09785,0.04991,0.04406,0.46727,0.03459,0.09575,0.1403,0.59855,0.62713,0.44299,0.24571,0.16125,0.47718,0.02991,0.06281,0.22812,0.09111,0.57727,0.22877,0.28288,0.04585,0.48441,0.55586,0.06074,0.06356,0.14151,0.07542,0.58573,0.49073,0.05358,0.28423,0.45905,0.16252,0.19698,0.00831,0.69283,0.0161,0.0805,0.21052,0.20319,0.84976,0.30531,0.16942,0.30548,0.7312,0.08371,0.23389,0.16917,0.04739,0.07079,0.47051,0.09692,0.06233,0.56578,0.39012,0.12398,0.2556,0.0503,0.14554,0.41043,0.00888,0.15172,0.14938,0.107,0.0107,0.96938,0.77213,0.20543,0.06864,0.1069,0.18668,0.25364,0.06099,0.84844,0.40705,0.42225,0.10387,0.0149,0.25066,0.30478,0.11689,0.44806,0.24134,0.03145,0.87151,0.84569,0.18804,0.03078,0.01594,0.2274,0.55132,0.04563,0.12499,0.12805,0.30604,0.05436,0.7066,0.00896,0.86294,0.5786,0.14709,0.10314,0.55263,0.22645,0.62541,0.52788,0.10631,0.28555,0.02426,0.07791,0.149,0.98576,0.68501,0.369,0.08562,0.03242,0.06642,0.27799,0.16486,0.01772,0.03959,0.31812,0.09375,0.83058,0.3333,0.23054,0.16622,0.50591,0.11853,0.03096,0.69247,0.31851,0.39261,0.28287,0.08503,0.08777,0.78799,0.34432,0.53977,0.7712,0.02326,0.18241,0.167,0.59265,0.41994,0.47321,0.19172,0.1237,0.1677,0.16436,0.25208,0.53902,0.13314,0.05845,0.42348,0.12991,0.3864,0.06197,0.11498,0.19844,0.09637,0.13276,0.02007,0.05506,0.2044,0.00364,0.82238,0.07649,0.27533,0.02441,0.1131,0.02772,0.05455,0.67651,0.64353,0.21131,0.02732,0.20418,0.68297,0.06754,0.32366,0.10899,0.31396,0.13541,0.21207,0.22032,0.03761,0.05762,0.75992,0.0549,0.06518,0.05812,0.26796,0.52965,0.014,0.69145,0.12556,0.42096,0.6113,0.12788,0.03143,0.07966,0.23934,0.24001,0.3248,0.35477,0.13608,0.03176,0.29704,0.14358,0.18782,0.52702,0.10025,0.07855,0.65407,0.07036,0.17656,0.12435,0.22295,0.37914,0.1033,0.21279,0.80029,0.1406,0.05383,0.07472,0.71296,0.36786,0.79944,0.05197,0.00855,0.56049,0.0424,0.13804,0.8943,0.3803,0.02575,0.21372,0.10835,0.0836,0.56348,0.71852,0.29942,0.14605,0.1576,0.53518,0.78274,0.15735,0.34028,0.50824,0.25678,0.02607,0.39495,0.08885,0.35625,0.18045,0.17175,0.46222,0.67057,0.15415,0.05007,0.1484,0.86861,0.14176,0.18345,0.38571,0.03221,0.3455,0.12967,0.22218,0.21259,0.12067,0.58173,0.10796,0.15658,0.65289,0.3545,0.15174,0.18169,0.24123,0.14627,0.27196,0.84891,0.07746,0.13264,0.04417,0.13168,0.02263,0.44498,0.28717,0.02649,0.90376,0.06298,0.0446,0.42743,0.63124,0.00479,0.02475,0.56593,0.07867,0.6554,0.0636,0.32692,0.03242,0.89229,0.01669,0.2928,0.51828,0.2275,0.56297,0.06192,0.23806,0.10363,0.74003,0.09305,0.16205,0.19055,0.4219,0.08552,0.10373,0.83662,0.30641,0.12299,0.35781,0.00519,0.13685,0.13126,0.17637,0.04007,0.044,0.61696,0.092,0.16244,0.07025,0.10279,0.02216,0.12792,0.07822,0.2133,0.32988,0.43648,0.54858,0.41692,0.05108,0.38409,0.0309,0.06011,0.16083,0.72102,0.48125,0.21664,0.14353,0.13876,0.74171,0.31657];
+
+/* ===== scoring (mirrors backend app/conformal.py) ===== */
+const NOTE_KW = {
+  chest_pain:["chest pain","chest pressure","chest tightness","chest discomfort","angina","substernal"],
+  shortness_breath:["shortness of breath","short of breath","sob","breathless","difficulty breathing","dyspnea","dyspnoea","can't breathe","cannot breathe","winded","gasping"],
+  dizzy:["dizzy","dizziness","lightheaded","light-headed","lightheadedness","faint","presyncope","vertigo","woozy"]
+};
+function noteFlags(note){
+  const t=" "+(note||"").toLowerCase().replace(/\s+/g," ").trim()+" ", f={};
+  for(const k in NOTE_KW){f[k]=0;for(const p of NOTE_KW[k]){const re=new RegExp("(?<![a-z])"+p.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"(?![a-z])");if(re.test(t)){f[k]=1;break;}}}
+  return f;
+}
+function sigmoid(z){return 1/(1+Math.exp(-z));}
+function quantileCount(v){let c=0;for(let i=0;i<CAL_SCORES.length;i++)if(CAL_SCORES[i]>=v)c++;return c;}
+function score(p){
+  const nf=noteFlags(p.note), F=MODEL.features, x=[];
+  for(let j=0;j<F.length;j++){const k=F[j];x.push(k in nf?nf[k]:(+p[k]||0));}
+  const scaled=x.map((v,j)=>(v-MODEL.mean[j])/MODEL.scale[j]);
+  let z=MODEL.intercept; for(let j=0;j<x.length;j++)z+=MODEL.coef[j]*scaled[j];
+  const p1=sigmoid(z), risk=Math.round(p1*100);
+  const label=risk>=MODEL.high?"High risk":risk>=MODEL.watch?"Watch":"Routine";
+  // conformal p-values: p_stable uses s=1-p0=p1 ; p_det uses s=1-p1=p0
+  const n=CAL_SCORES.length;
+  const pvStable=(1+quantileCount(p1))/(n+1);
+  const pvDet=(1+quantileCount(1-p1))/(n+1);
+  const inSet=[pvStable>MODEL.alpha,pvDet>MODEL.alpha];
+  let set=[]; if(inSet[0])set.push("Stable"); if(inSet[1])set.push("Deterioration");
+  if(set.length===0)set=[pvStable>=pvDet?"Stable":"Deterioration"];
+  const sorted=[pvStable,pvDet].sort((a,b)=>b-a);
+  const confidence=+(100*(1-sorted[1])).toFixed(1), credibility=+(100*sorted[0]).toFixed(1);
+  const sigma=Math.sqrt(p1*(1-p1))+MODEL.beta;
+  const lo=Math.max(0,p1-MODEL.q_reg*sigma), hi=Math.min(1,p1+MODEL.q_reg*sigma);
+  const interval=[Math.round(lo*100),Math.round(hi*100)];
+  // top factors: coef*scaled, positive, top 3
+  const contrib=scaled.map((s,j)=>({feature:F[j],label:MODEL.labels[j],value:x[j],c:MODEL.coef[j]*s}));
+  const top=contrib.filter(o=>o.c>0).sort((a,b)=>b.c-a.c).slice(0,3);
+  const maxc=Math.max(...top.map(o=>o.c),1e-4);
+  return {risk_score:risk,risk_label:label,confidence,credibility,prediction_set:set,
+    prediction_interval:interval,confidence_level:Math.round((1-MODEL.alpha)*100),
+    top_factors:top.map(o=>({feature:o.feature,label:o.label,value:o.value,rel:o.c/maxc})),
+    note_flags:nf, input:p};
+}
+
+/* ===== seed patients (same as backend) ===== */
+const SEED=[
+ {name:"Ava Bennett",heart_rate:110,systolic_bp:98,resp_rate:23,spo2:91,temperature:37.9,hf:1,diabetes:1,prior_mi:0,age_gt_65:1,recent_hosp:1,note:"Increasing shortness of breath overnight, chest pressure, dizzy on standing."},
+ {name:"Marcus Reyes",heart_rate:90,systolic_bp:116,resp_rate:18,spo2:95,temperature:37.1,hf:0,diabetes:1,prior_mi:1,age_gt_65:1,recent_hosp:0,note:"Short of breath climbing stairs, mild chest discomfort."},
+ {name:"Priya Nair",heart_rate:86,systolic_bp:120,resp_rate:17,spo2:96,temperature:37.0,hf:0,diabetes:1,prior_mi:0,age_gt_65:1,recent_hosp:1,note:"Feeling a bit lightheaded this morning, otherwise stable."},
+ {name:"Daniel Osei",heart_rate:80,systolic_bp:126,resp_rate:16,spo2:97,temperature:36.9,hf:0,diabetes:1,prior_mi:0,age_gt_65:0,recent_hosp:0,note:"Routine follow-up, no acute complaints."},
+ {name:"Elena Vasquez",heart_rate:72,systolic_bp:122,resp_rate:14,spo2:99,temperature:36.6,hf:0,diabetes:0,prior_mi:0,age_gt_65:0,recent_hosp:0,note:"Well, here for medication refill."}
+];
+const RANK={"High risk":0,"Watch":1,"Routine":2};
+let PATIENTS=SEED.map((p,i)=>({id:i+1,...score(p),...p}));
+let nextId=SEED.length+1, sortKey="rank";
+
+/* ===== helpers ===== */
+const tierCls=l=>l==="High risk"?"high":l==="Watch"?"watch":"routine";
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+const flagFeat=["hf","diabetes","prior_mi","age_gt_65","recent_hosp","chest_pain","shortness_breath","dizzy"];
+const fmtVal=f=>flagFeat.includes(f.feature)?(f.value>=1?"present":"absent"):String(f.value);
+
+/* ===== worklist ===== */
+function sortedPatients(){
+  const a=[...PATIENTS];
+  if(sortKey==="score")a.sort((x,y)=>y.risk_score-x.risk_score);
+  else if(sortKey==="confidence")a.sort((x,y)=>y.confidence-x.confidence);
+  else a.sort((x,y)=>RANK[x.risk_label]-RANK[y.risk_label]||y.risk_score-x.risk_score||y.confidence-x.confidence);
+  return a;
+}
+function renderWorklist(animate){
+  const box=document.getElementById("wl-rows"); box.innerHTML="";
+  document.getElementById("wl-count").textContent=PATIENTS.length+" patients · High risk & high confidence rank first";
+  sortedPatients().forEach((p,i)=>{
+    const row=el("div","wl-row");
+    row.innerHTML=`<div class="wl-rank">${i+1}</div>
+      <div class="wl-name">${p.name}<div class="sub">HR ${p.heart_rate} · SpO₂ ${p.spo2}% · RR ${p.resp_rate}</div></div>
+      <div class="wl-tier"><span class="pill ${tierCls(p.risk_label)}"><span class="dot"></span>${p.risk_label}</span></div>
+      <div class="wl-score">${p.risk_score}</div>
+      <div class="wl-conf"><div class="r"><span>${p.confidence.toFixed(0)}%</span><span>PI ${p.prediction_interval[0]}–${p.prediction_interval[1]}</span></div>
+      <div class="confbar"><div class="fill ${tierCls(p.risk_label)}"></div></div></div>`;
+    row.onclick=()=>openDetail(p);
+    box.appendChild(row);
+    const fill=row.querySelector(".fill");
+    requestAnimationFrame(()=>{fill.style.width=p.confidence+"%";});
+  });
+}
+document.querySelectorAll(".sorters .chip").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".sorters .chip").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); sortKey=b.dataset.s; renderWorklist(true);
+});
+
+/* ===== score result panel ===== */
+function resultHTML(r,name){
+  const [lo,hi]=r.prediction_interval;
+  const facs=r.top_factors.map(f=>`<div class="factor"><div class="fn">${f.label}</div><div class="fv">${fmtVal(f)}</div>
+     <div class="fbar"><div class="fb" style="width:0"></div></div></div>`).join("");
+  const sets=r.prediction_set.map(s=>`<span class="settag">${s}</span>`).join("");
+  return `<div class="panel">
+    ${name?`<div class="ssub" style="margin-bottom:14px">Result for <b style="color:var(--ink)">${name}</b></div>`:""}
+    <div class="result">
+      <div class="ring"><div class="score-big" data-count="${r.risk_score}">0</div>
+        <div class="cap">Risk of deterioration / 100</div>
+        <span class="pill ${tierCls(r.risk_label)}"><span class="dot"></span>${r.risk_label}</span></div>
+      <div>
+        <div class="mrow"><span class="mlab">Calibrated confidence · ${r.confidence_level}% level</span>
+          <span class="bigpct" data-count="${Math.round(r.confidence)}" data-suffix="%">0%</span></div>
+        <div class="confbar"><div class="fill ${tierCls(r.risk_label)}" style="width:0"></div></div>
+        <div class="inote">Conformal prediction interval: <b>${lo}–${hi}</b> on the 0–100 risk scale.
+          Prediction set at ${r.confidence_level}% coverage: ${sets}
+          ${r.prediction_set.length>1?"<em> — both outcomes remain plausible, so treat this score with caution.</em>":""}</div>
+        <div style="margin-top:20px"><div class="mlab" style="margin-bottom:8px">Top factors pushing risk up</div>${facs}</div>
+      </div>
+    </div></div>`;
+}
+function animateResult(root,r){
+  root.querySelectorAll("[data-count]").forEach(node=>{
+    const to=+node.dataset.count, suf=node.dataset.suffix||"", t0=performance.now();
+    (function tick(now){const t=Math.min(1,(now-t0)/1200),e=1-Math.pow(1-t,3);
+      node.textContent=Math.round(to*e)+suf; if(t<1)requestAnimationFrame(tick);})(t0);
+  });
+  requestAnimationFrame(()=>{
+    const f=root.querySelector(".confbar .fill"); if(f)f.style.width=r.confidence+"%";
+    root.querySelectorAll(".fbar .fb").forEach((b,i)=>{if(r.top_factors[i])b.style.width=(r.top_factors[i].rel*100)+"%";});
+  });
+}
+
+/* ===== detail drawer ===== */
+const VITAL_ABN={heart_rate:v=>v>100||v<50,systolic_bp:v=>v<100||v>180,resp_rate:v=>v>20||v<10,spo2:v=>v<94,temperature:v=>v>37.8||v<35.5};
+const VITAL_UNIT={heart_rate:"bpm",systolic_bp:"mmHg",resp_rate:"/min",spo2:"%",temperature:"°C"};
+const VITAL_LBL={heart_rate:"Heart rate",systolic_bp:"Systolic BP",resp_rate:"Respiratory rate",spo2:"SpO₂",temperature:"Temperature"};
+const FLAG_LBL={hf:"Prior heart failure",diabetes:"Diabetes",prior_mi:"Prior MI",age_gt_65:"Age > 65",recent_hosp:"Recent hospitalization"};
+function openDetail(p){
+  const d=document.getElementById("drawer");
+  const vitals=Object.keys(VITAL_LBL).map(k=>`<div><div class="k">${VITAL_LBL[k]}</div><div class="v ${VITAL_ABN[k](p[k])?"abn":""}">${p[k]} ${VITAL_UNIT[k]}</div></div>`).join("");
+  const flags=Object.keys(FLAG_LBL).filter(k=>p[k]).map(k=>`<span class="settag">${FLAG_LBL[k]}</span>`).join("")||`<span class="ssub" style="margin:0">No history flags recorded.</span>`;
+  const ext=Object.keys(p.note_flags).filter(k=>p.note_flags[k]).map(k=>`<span class="settag">${k.replace(/_/g," ")}</span>`).join("");
+  d.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 class="stitle">${p.name}</h2><button class="dclose" id="dclose">Close ✕</button></div>
+    <div style="margin-bottom:16px">${resultHTML(p,null)}</div>
+    <div class="panel" style="margin-bottom:16px"><div class="mlab" style="margin-bottom:10px">Vitals</div><div class="kv">${vitals}</div></div>
+    <div class="panel" style="margin-bottom:16px"><div class="mlab" style="margin-bottom:10px">History flags</div><div style="display:flex;flex-wrap:wrap;gap:8px">${flags}</div></div>
+    <div class="panel"><div class="mlab" style="margin-bottom:8px">Symptom note</div>
+      <p style="color:${p.note?"var(--ink)":"var(--muted)"}">${p.note||"No note recorded."}</p>
+      ${ext?`<div style="margin-top:10px"><span class="mlab">Extracted: </span>${ext}</div>`:""}</div>`;
+  document.getElementById("scrim").classList.add("on");
+  d.querySelector("#dclose").onclick=closeDetail;
+  animateResult(d,p);
+}
+function closeDetail(){document.getElementById("scrim").classList.remove("on");}
+document.getElementById("scrim").onclick=e=>{if(e.target.id==="scrim")closeDetail();};
+
+/* ===== intake form ===== */
+const VITALS=[["heart_rate","Heart rate","bpm",20,250,78],["systolic_bp","Systolic BP","mmHg",50,260,122],
+ ["resp_rate","Respiratory rate","/min",4,60,16],["spo2","SpO₂","%",50,100,97],["temperature","Temperature","°C",30,43,36.8]];
+const FLAGS=[["hf","Prior heart failure"],["diabetes","Diabetes"],["prior_mi","Prior MI"],["age_gt_65","Age > 65"],["recent_hosp","Recent hospitalization"]];
+const vbox=document.getElementById("vitals");
+VITALS.forEach(v=>{const f=el("div","field");
+  f.innerHTML=`<label>${v[1]} <span class="unit">(${v[2]})</span></label><input type="number" step="any" id="fv-${v[0]}" value="${v[5]}">`;
+  vbox.appendChild(f);});
+const fbox=document.getElementById("flags");
+FLAGS.forEach(fl=>{const l=el("label","check");
+  l.innerHTML=`<input type="checkbox" id="fl-${fl[0]}">${fl[1]}`;
+  l.querySelector("input").onchange=e=>l.classList.toggle("on",e.target.checked);
+  fbox.appendChild(l);});
+
+function readForm(){
+  const p={name:document.getElementById("f-name").value.trim(),note:document.getElementById("f-note").value};
+  VITALS.forEach(v=>p[v[0]]=parseFloat(document.getElementById("fv-"+v[0]).value));
+  FLAGS.forEach(fl=>p[fl[0]]=document.getElementById("fl-"+fl[0]).checked?1:0);
+  return p;
+}
+function validate(p){
+  const errs=[]; if(!p.name)errs.push("Add a patient name.");
+  VITALS.forEach(v=>{const val=p[v[0]];const bad=isNaN(val)||val<v[3]||val>v[4];
+    document.getElementById("fv-"+v[0]).closest(".field").classList.toggle("bad",bad);
+    if(bad)errs.push(`${v[1]} must be between ${v[3]} and ${v[4]}.`);});
+  return errs;
+}
+document.getElementById("form").onsubmit=e=>{
+  e.preventDefault();
+  const p=readForm(), errs=validate(p), slot=document.getElementById("err-slot");
+  if(errs.length){slot.innerHTML=`<div class="banner err"><b>We couldn't score this patient.</b><ul style="margin:6px 0 0 18px">${errs.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;return;}
+  slot.innerHTML="";
+  const r=score(p), rec={id:nextId++,...r,...p};
+  PATIENTS.push(rec);
+  const rs=document.getElementById("result-slot");
+  rs.innerHTML=resultHTML(r,p.name);
+  animateResult(rs,r);
+  renderWorklist(false);
+  rs.scrollIntoView({behavior:"smooth",block:"center"});
+};
+document.getElementById("reset").onclick=()=>{
+  document.getElementById("f-name").value="";document.getElementById("f-note").value="";
+  VITALS.forEach(v=>document.getElementById("fv-"+v[0]).value=v[5]);
+  FLAGS.forEach(fl=>{document.getElementById("fl-"+fl[0]).checked=false;document.getElementById("fl-"+fl[0]).closest(".check").classList.remove("on");});
+  document.querySelectorAll("#vitals .field").forEach(f=>f.classList.remove("bad"));
+  document.getElementById("result-slot").innerHTML="";document.getElementById("err-slot").innerHTML="";
+};
+
+/* ===== about steps ===== */
+const STEPS=[["1","Intake","Vitals, EHR history flags, and a free-text note. Keyword extraction turns the note into structured signals."],
+ ["2","Score","A logistic-regression model estimates the probability of deterioration as a 0–100 risk score."],
+ ["3","Confidence","Split-conformal calibration attaches a valid confidence and prediction interval to every score."],
+ ["4","Worklist","Patients rank High → Watch → Routine; high-risk, high-confidence cases float to the top."]];
+document.getElementById("steps").innerHTML=STEPS.map(s=>`<div class="panel tint acard"><div class="num">${s[0]}</div><h3>${s[1]}</h3><p>${s[2]}</p></div>`).join("");
+
+/* ===== tabs ===== */
+function show(v){
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));
+  document.getElementById("v-"+v).classList.add("on");
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.v===v));
+  if(v==="worklist")renderWorklist(true);
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>show(t.dataset.v));
+
+/* init */
+renderWorklist(true);
+show("worklist");
+</script>
+</body>
+</html>
