@@ -30,6 +30,21 @@ button{font-family:var(--sans);cursor:pointer}
 .tab{border:0;background:transparent;color:var(--muted);font-size:14px;font-weight:600;padding:8px 16px;border-radius:999px;transition:.2s}
 .tab:hover{color:var(--ink)}
 .tab.active{background:var(--white);color:var(--ink);box-shadow:var(--sh)}
+.roles{display:flex;gap:4px;background:var(--ink);border-radius:999px;padding:4px}
+.role{border:0;background:transparent;color:#9fb6c8;font-size:14px;font-weight:600;padding:8px 18px;border-radius:999px;display:flex;align-items:center;gap:8px;transition:.2s}
+.role:hover{color:#fff}
+.role.active{background:var(--white);color:var(--ink);box-shadow:var(--sh)}
+.role .rdot{width:8px;height:8px;border-radius:50%;background:#9fb6c8}
+.role.active .rdot{background:var(--accent)}
+.subnav{margin-bottom:24px;display:flex;justify-content:flex-start}
+.subnav.hide{display:none}
+.pcard{max-width:720px;margin:0 auto}
+.pr-head{display:flex;align-items:center;gap:14px;margin-bottom:4px}
+.pr-badge{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 54px}
+.pr-badge svg{width:28px;height:28px}
+.pr-title{font-family:var(--serif);font-size:23px;line-height:1.15}
+.disclaimer{background:#fbf1e9;border:1px solid #e6c6a9;color:#7a4a25;font-size:13px}
+.disclaimer b{color:#5c3417}
 .panel{background:var(--white);border:1px solid var(--hair);border-radius:var(--radius);box-shadow:var(--sh);padding:22px}
 .panel.tint{background:var(--panel)}
 .stitle{font-size:21px}
@@ -123,6 +138,13 @@ textarea{resize:vertical;min-height:70px;width:100%}
       </div>
       <svg class="ecg" viewBox="0 0 92 30"><path d="M0,15 L14,15 L20,15 L24,10 L28,20 L32,15 L40,15 L46,15 L50,15 L54,5 L58,15 L62,15 L70,15 L74,3 L78,26 L82,15 L86,15 L92,15"/></svg>
     </div>
+    <div class="roles" id="roles">
+      <button class="role active" data-role="clinician"><span class="rdot"></span>Clinician</button>
+      <button class="role" data-role="patient"><span class="rdot"></span>Patient</button>
+    </div>
+  </div>
+
+  <div class="subnav" id="subnav">
     <div class="tabs" id="tabs">
       <button class="tab" data-v="worklist">Priority Worklist</button>
       <button class="tab" data-v="intake">Intake</button>
@@ -195,10 +217,31 @@ textarea{resize:vertical;min-height:70px;width:100%}
         <div class="metric"><div class="mv">89.7%</div><div class="ml">Set coverage (target 90%)</div></div>
         <div class="metric"><div class="mv">89.7%</div><div class="ml">Interval coverage</div></div>
         <div class="metric"><div class="mv">1.25</div><div class="ml">Avg prediction-set size</div></div>
-        <div class="metric"><div class="mv">1,000</div><div class="ml">Calibretion examples</div></div>
+        <div class="metric"><div class="mv">1,000</div><div class="ml">Calibration examples</div></div>
       </div>
       <p class="inote" style="margin-top:18px"><b>Method:</b> split / inductive conformal prediction. A logistic-regression model is fit on a training split; a disjoint calibration split provides nonconformity scores (Vovk p-values for the class set; normalized residuals for the risk interval), giving distribution-free, finite-sample coverage close to the 90% target. This exact model runs client-side in this page.</p>
     </div>
+  </div>
+
+  <!-- PATIENT -->
+  <div class="view" id="v-patient">
+    <div class="panel pcard" style="margin-bottom:0">
+      <h2 class="stitle">How are you feeling today?</h2>
+      <p class="ssub">A quick, confidence-tagged check. Describe your symptoms — add vitals if you have them (e.g. from a wearable). Leave anything you don't know blank.</p>
+      <div class="field" style="margin-bottom:16px">
+        <label>Your symptoms <span class="unit">(in your own words)</span></label>
+        <textarea id="p-note" placeholder="e.g. I've had shortness of breath and some chest tightness since this morning, and I feel a bit dizzy."></textarea>
+      </div>
+      <div class="mlab" style="margin-bottom:10px">Vitals — optional</div>
+      <div class="form-grid" id="p-vitals"></div>
+      <div class="mlab" style="margin:18px 0 10px">About you — optional</div>
+      <div class="checks" id="p-flags"></div>
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button class="btn" id="p-submit" type="button">Check my risk</button>
+        <button class="btn ghost" id="p-reset" type="button">Reset</button>
+      </div>
+    </div>
+    <div id="p-result" class="pcard"></div>
   </div>
 
   <div class="footer"><b>Research prototype. Synthetic data. Not for clinical use.</b> — Calibre Health AI demonstrates conformal-calibrated triage on generated data and has not been clinically validated.</div>
@@ -424,6 +467,82 @@ function show(v){
   if(v==="worklist")renderWorklist(true);
 }
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>show(t.dataset.v));
+
+/* ===== role switch (clinician / patient) ===== */
+function setRole(role){
+  const clin=role==="clinician";
+  document.querySelectorAll(".role").forEach(b=>b.classList.toggle("active",b.dataset.role===role));
+  document.getElementById("subnav").classList.toggle("hide",!clin);
+  if(clin){ show("worklist"); }
+  else {
+    document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));
+    document.getElementById("v-patient").classList.add("on");
+  }
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll(".role").forEach(b=>b.onclick=()=>setRole(b.dataset.role));
+
+/* ===== patient self-check ===== */
+const PVITALS=[["hr","Heart rate","bpm",78],["spo2","SpO₂","%",97],["temp","Temperature","°C",36.8]];
+const PFLAGS=[["age","I'm over 65"],["diabetes","I have diabetes"],["hf","I have a heart condition"],["hosp","Recent hospital stay"]];
+const _pvb=document.getElementById("p-vitals");
+PVITALS.forEach(v=>{const f=el("div","field");
+  f.innerHTML=`<label>${v[1]} <span class="unit">(${v[2]})</span></label><input type="number" step="any" id="pf-${v[0]}" placeholder="${v[3]}">`;
+  _pvb.appendChild(f);});
+const _pfb=document.getElementById("p-flags");
+PFLAGS.forEach(fl=>{const l=el("label","check");
+  l.innerHTML=`<input type="checkbox" id="pk-${fl[0]}">${fl[1]}`;
+  l.querySelector("input").onchange=e=>l.classList.toggle("on",e.target.checked);
+  _pfb.appendChild(l);});
+
+function pScore(){
+  const num=(id,d)=>{const v=parseFloat(document.getElementById(id).value);return isNaN(v)?d:v;};
+  const chk=id=>document.getElementById(id).checked?1:0;
+  return score({name:"You",
+    heart_rate:num("pf-hr",78), spo2:num("pf-spo2",97), temperature:num("pf-temp",36.8),
+    systolic_bp:122, resp_rate:16,
+    age_gt_65:chk("pk-age"), diabetes:chk("pk-diabetes"), hf:chk("pk-hf"), recent_hosp:chk("pk-hosp"), prior_mi:0,
+    note:document.getElementById("p-note").value});
+}
+const pulseSvg=c=>`<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12 h5 l2 -5 l3 10 l2 -5 h6"/></svg>`;
+function pResultHTML(r){
+  const tier=tierCls(r.risk_label), uncertain=r.prediction_set.length>1;
+  const M={
+    high:{t:"Please consider seeking care",c:"#0E5FA0",bg:"#e0edf8",
+      msg:"Your symptoms suggest it's worth contacting your care team or seeking medical attention soon.",
+      emer:"If this feels like an emergency, call your local emergency number now."},
+    watch:{t:"Worth keeping an eye on",c:"#1C7FC4",bg:"#e4f0f9",
+      msg:"Nothing points to an emergency, but keep an eye on how you feel — and contact your care team if it gets worse.",emer:""},
+    routine:{t:"Nothing urgent right now",c:"#5E7488",bg:"#eef3f8",
+      msg:"Based on what you shared, nothing here points to urgent risk. Keep taking care of yourself.",emer:""}
+  }[tier];
+  const conf=uncertain
+    ? "We're <b>not fully certain</b> about this reading — when in doubt, it's always okay to check in with your care team."
+    : `How sure we are about this: <b>${Math.round(r.confidence)}%</b>.`;
+  return `<div class="panel" style="margin-top:18px">
+    <div class="pr-head">
+      <div class="pr-badge" style="background:${M.bg}">${pulseSvg(M.c)}</div>
+      <div><div class="mlab">Your result</div><div class="pr-title" style="color:${M.c}">${M.t}</div></div>
+    </div>
+    <p style="margin:10px 0 0">${M.msg}${M.emer?` <b>${M.emer}</b>`:""}</p>
+    <div class="confbar" style="margin:16px 0 8px"><div class="fill ${tier}" style="width:0"></div></div>
+    <p class="ssub" style="margin:0">${conf}</p>
+    <div class="banner disclaimer" style="margin-top:18px">⚠️ This is a <b>research prototype</b> using a synthetic model. It is <b>not medical advice</b>, cannot diagnose you, and is not a substitute for a doctor. If you feel unwell, contact your care team or emergency services.</div>
+  </div>`;
+}
+document.getElementById("p-submit").onclick=()=>{
+  const r=pScore(), rs=document.getElementById("p-result");
+  rs.innerHTML=pResultHTML(r);
+  const f=rs.querySelector(".fill");
+  requestAnimationFrame(()=>{ if(f) f.style.width=r.confidence+"%"; });
+  rs.scrollIntoView({behavior:"smooth",block:"start"});
+};
+document.getElementById("p-reset").onclick=()=>{
+  document.getElementById("p-note").value="";
+  PVITALS.forEach(v=>document.getElementById("pf-"+v[0]).value="");
+  PFLAGS.forEach(fl=>{const c=document.getElementById("pk-"+fl[0]);c.checked=false;c.closest(".check").classList.remove("on");});
+  document.getElementById("p-result").innerHTML="";
+};
 
 /* init */
 renderWorklist(true);
